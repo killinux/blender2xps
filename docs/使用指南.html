@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blender2XPS 使用指南</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --bg: #F1F3F5;
+    --surface: #FFFFFF;
+    --surface-2: #E9EDF1;
+    --ink: #1B1F24;
+    --ink-2: #5B6470;
+    --line: #D5DAE0;
+    --accent: #1E7F8C;
+    --accent-ink: #145E68;
+    --accent-soft: #DDEFF1;
+    --warn: #B7791F;
+    --warn-soft: #F8EBD3;
+    --code-bg: #EEF1F4;
+    --shadow: 0 1px 2px rgba(27, 31, 36, 0.06);
+    --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+    --mono: "JetBrains Mono", Consolas, "SF Mono", Menlo, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #15181D;
+      --surface: #1D2127;
+      --surface-2: #242930;
+      --ink: #E6E9EE;
+      --ink-2: #98A2B3;
+      --line: #2E343C;
+      --accent: #4FB3BF;
+      --accent-ink: #8AD3DB;
+      --accent-soft: #1B3236;
+      --warn: #E0A63A;
+      --warn-soft: #3A2E16;
+      --code-bg: #12151A;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #15181D;
+    --surface: #1D2127;
+    --surface-2: #242930;
+    --ink: #E6E9EE;
+    --ink-2: #98A2B3;
+    --line: #2E343C;
+    --accent: #4FB3BF;
+    --accent-ink: #8AD3DB;
+    --accent-soft: #1B3236;
+    --warn: #E0A63A;
+    --warn-soft: #3A2E16;
+    --code-bg: #12151A;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-ink); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+  code, pre, kbd {
+    font-family: var(--mono);
+    font-size: 0.9em;
+  }
+  code {
+    background: var(--code-bg);
+    padding: 0.08em 0.4em;
+    border-radius: 4px;
+    color: var(--ink);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: 0;
+  }
+  pre code { background: none; padding: 0; font-size: 13px; }
+  h1, h2, h3 { text-wrap: balance; line-height: 1.25; margin: 0; font-weight: 700; }
+  h2 { font-size: 22px; letter-spacing: -0.01em; }
+  h3 { font-size: 16px; margin-top: 8px; }
+  p { margin: 0; }
+
+  /* header */
+  .masthead {
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .masthead-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px 40px;
+  }
+  .brand { display: flex; flex-direction: column; gap: 6px; }
+  .brand .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+  .brand h1 { font-size: 30px; letter-spacing: -0.02em; }
+  .brand h1 span { color: var(--ink-2); font-weight: 400; }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .meta span {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-2);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 3px 9px;
+    background: var(--bg);
+  }
+
+  /* pipeline strip */
+  .flow {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 20px 24px 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .flow .step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 12px 14px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .flow .step + .step::before {
+    content: "";
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 7px solid var(--line);
+    transform: translateY(-50%);
+  }
+  .flow .k {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+  }
+  .flow .t { font-weight: 700; font-size: 15px; }
+  .flow .d { color: var(--ink-2); font-size: 13px; line-height: 1.5; }
+
+  /* body layout */
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 24px 72px;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 40px;
+    align-items: start;
+  }
+  nav.toc {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
+  }
+  nav.toc .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-bottom: 6px;
+  }
+  nav.toc a {
+    color: var(--ink);
+    padding: 4px 10px;
+    border-left: 2px solid var(--line);
+    line-height: 1.5;
+  }
+  nav.toc a:hover { border-left-color: var(--accent); text-decoration: none; background: var(--surface); }
+  nav.toc a .n { font-family: var(--mono); color: var(--ink-2); margin-right: 6px; font-size: 12px; }
+
+  main { display: flex; flex-direction: column; gap: 44px; min-width: 0; }
+  section { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 16px; }
+  section > header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  section > header .num {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent-ink);
+    letter-spacing: 0.04em;
+  }
+  .prose { max-width: 74ch; display: flex; flex-direction: column; gap: 10px; }
+  .prose ul, .prose ol { margin: 0; padding-left: 1.4em; display: flex; flex-direction: column; gap: 4px; }
+  .lead { color: var(--ink-2); }
+
+  /* tables */
+  .scroll { overflow-x: auto; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14px;
+    line-height: 1.6;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  th, td { padding: 9px 12px; vertical-align: top; text-align: left; border-top: 1px solid var(--line); }
+  thead th {
+    border-top: 0;
+    background: var(--surface-2);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--ink-2);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  td:first-child { white-space: nowrap; font-weight: 500; }
+  td.def { font-family: var(--mono); font-size: 13px; color: var(--ink-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.wide td:first-child { white-space: normal; min-width: 12em; }
+  table.formats td { font-variant-numeric: tabular-nums; }
+
+  /* callouts */
+  .note {
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    max-width: 74ch;
+  }
+  .note.warn { border-left-color: var(--warn); background: var(--warn-soft); }
+  .note strong { font-weight: 700; }
+
+  /* option groups */
+  .group-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    margin-top: 6px;
+  }
+
+  /* recommended settings tiles */
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .tile {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: var(--shadow);
+  }
+  .tile h3 { font-size: 15px; }
+  .tile .src { font-family: var(--mono); font-size: 12px; color: var(--accent-ink); }
+  .tile ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+
+  /* three steps */
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; counter-reset: step; }
+  .steps .s {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 14px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+  }
+  .steps .s::before {
+    counter-increment: step;
+    content: counter(step);
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 20px;
+    line-height: 1;
+  }
+  .steps .s b { font-size: 15px; }
+
+  /* report sample */
+  .report { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+
+  footer {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px 40px;
+    color: var(--ink-2);
+    font-size: 13px;
+  }
+
+  @media (max-width: 960px) {
+    .page { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+    nav.toc { position: static; flex-direction: row; flex-wrap: wrap; gap: 6px; }
+    nav.toc .label { width: 100%; }
+    nav.toc a { border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+    .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .flow .step + .step::before { display: none; }
+    .steps, .tiles { grid-template-columns: minmax(0, 1fr); }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="brand">
+      <div class="eyebrow">Blender add-on · Import-Export</div>
+      <h1>Blender2XPS <span>使用指南</span></h1>
+      <p class="lead">把 Blender 里的角色（网格 + 骨架 + 权重 + 贴图）导出成 XNALara / XPS 直接能加载的 <code>.xps</code> / <code>.mesh</code> / <code>.mesh.ascii</code>。不依赖 XNALaraMesh 或其他插件。</p>
+    </div>
+    <div class="meta">
+      <span>v1.0.0</span>
+      <span>Blender 3.6 · 4.x</span>
+      <span>XPS 11.x</span>
+      <span>E:\code\othercode\blender2xps</span>
+    </div>
+  </div>
+</header>
+
+<div class="flow" aria-label="导出流程">
+  <div class="step"><div class="k">Blender</div><div class="t">场景</div><div class="d">骨架 + 绑定网格 + 材质节点</div></div>
+  <div class="step"><div class="k">检查模型</div><div class="t">干跑</div><div class="d">权重、骨名映射、渲染组、贴图，不写文件</div></div>
+  <div class="step"><div class="k">导出</div><div class="t">.xps + 贴图 + 报告</div><div class="d">写完立即回读校验；场景不被改动</div></div>
+  <div class="step"><div class="k">XPS</div><div class="t">Load Generic_Item</div><div class="d">面向观众、标准骨名、辅助骨隐藏</div></div>
+</div>
+
+<div class="page">
+<nav class="toc" aria-label="目录">
+  <div class="label">目录</div>
+  <a href="#install"><span class="n">1</span>安装与启用</a>
+  <a href="#steps"><span class="n">2</span>三步导出</a>
+  <a href="#options"><span class="n">3</span>面板选项逐项说明</a>
+  <a href="#presets"><span class="n">4</span>按模型来源的推荐设置</a>
+  <a href="#overrides"><span class="n">5</span>控制单个部件</a>
+  <a href="#report"><span class="n">6</span>导出报告怎么读</a>
+  <a href="#xps"><span class="n">7</span>在 XPS 里加载和检查</a>
+  <a href="#batch"><span class="n">8</span>批量导出</a>
+  <a href="#api"><span class="n">9</span>脚本调用</a>
+  <a href="#tools"><span class="n">10</span>命令行工具</a>
+  <a href="#faq"><span class="n">11</span>常见问题排查</a>
+  <a href="#formats"><span class="n">12</span>文件格式速查</a>
+</nav>
+
+<main>
+
+<section id="install">
+  <header><span class="num">1</span><h2>安装与启用</h2></header>
+  <div class="prose">
+    <p>仓库结构：</p>
+  </div>
+  <pre><code>blender2xps/            插件本体（一个 Python 包）
+tools/                  命令行工具：xpsdump / batch_export_blends / write_export_index / blender_mcp
+tests/                  端到端测试
+docs/使用指南.md        本文的 Markdown 版本
+install.ps1             安装脚本</code></pre>
+  <div class="prose">
+    <h3>方式 A：联接安装（推荐，改代码即生效）</h3>
+  </div>
+  <pre><code>cd E:\code\othercode\blender2xps
+.\install.ps1              # Blender 3.6
+.\install.ps1 3.6,4.2      # 同时装到多个版本</code></pre>
+  <div class="prose">
+    <p>脚本在 <code>%APPDATA%\Blender Foundation\Blender\&lt;版本&gt;\scripts\addons\blender2xps</code> 建一个指向仓库的目录联接。加 <code>-Copy</code> 则改为复制一份。</p>
+    <h3>方式 B：手动</h3>
+    <p>把 <code>blender2xps</code> 文件夹整个复制到上面的 addons 目录；或者打成 zip，在 Edit &gt; Preferences &gt; Add-ons &gt; Install... 里选 zip（4.2+ 用右上角下拉菜单的 Install from Disk）。</p>
+    <h3>启用</h3>
+    <p>Edit &gt; Preferences &gt; Add-ons，搜索 <strong>Blender2XPS</strong>，勾选，点左下角 Save Preferences。启用后：</p>
+    <ul>
+      <li>3D 视口侧边栏（按 <kbd>N</kbd>）多出 <strong>XPS</strong> 页签；</li>
+      <li>File &gt; Export 菜单多出 <strong>XPS / XNALara (.xps/.mesh/.ascii) [Blender2XPS]</strong>。</li>
+    </ul>
+    <p>Blender 正在运行且装了 blender-mcp 插件时，可以不点鼠标直接启用或热重载：</p>
+  </div>
+  <pre><code>python tools\blender_mcp.py enable     # 启用并保存偏好
+python tools\blender_mcp.py reload     # 改完代码后重载</code></pre>
+</section>
+
+<section id="steps">
+  <header><span class="num">2</span><h2>三步导出</h2></header>
+  <div class="steps">
+    <div class="s"><b>选骨架</b><span>点一下骨架（或它绑定的任意网格），面板“目标骨架”会显示自动识别的结果；多副骨架的场景可在“骨架”框里指定。</span></div>
+    <div class="s"><b>检查模型</b><span>点 <strong>检查模型</strong>。弹窗列出骨架统计、每个网格的权重情况、每个材质会用的渲染组和贴图、会被跳过的物体。完整内容在文本编辑器的 <code>blender2xps_report</code> 文本块和系统控制台里。这一步不写任何文件。</span></div>
+    <div class="s"><b>导出</b><span>设置“输出文件”，点 <strong>导出...</strong>，在文件浏览器里确认路径和选项。状态栏显示 <code>已导出 xxx.xps | 骨骼 n | 网格 n | 顶点 n | 三角面 n | 警告 n</code>；同目录有贴图和 <code>xxx.xps.report.txt</code>。点 <strong>打开输出目录</strong> 直接打开文件夹。</span></div>
+  </div>
+  <div class="prose">
+    <p>也可以走 File &gt; Export 菜单：选项在文件浏览器右侧，和面板一样；菜单会记住上次的设置，面板的“导出...”按钮则使用面板里的设置。</p>
+  </div>
+  <div class="note"><strong>导出不会改动场景。</strong>修改器开关、材质、选择状态在导出结束后全部恢复；烘焙用的是材质副本。</div>
+</section>
+
+<section id="options">
+  <header><span class="num">3</span><h2>面板选项逐项说明</h2></header>
+  <div class="group-title">范围与几何</div>
+  <div class="scroll"><table class="wide">
+    <thead><tr><th>选项</th><th>默认</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>导出范围</td><td class="def">骨架绑定的全部网格</td><td><code>骨架绑定的全部网格</code>：绑定到目标骨架的所有网格。<code>仅选中的物体</code>：只导选中的网格（只选了骨架时导出绑定到它的全部网格）。<code>全部可见网格</code>：视图层里所有可见网格，多副骨架时用这个。</td></tr>
+      <tr><td>跳过隐藏物体</td><td class="def">开</td><td>隐藏的网格不导出。mmd_tools 的刚体、关节物体无论如何都不导出。</td></tr>
+      <tr><td>应用修改器</td><td class="def">开</td><td>导出计算后的网格：镜像、细分、形态键当前混合结果等。骨架修改器始终按静止姿态处理，不会被烘进网格。</td></tr>
+      <tr><td>把当前姿态烘焙为绑定姿态</td><td class="def">关</td><td>用当前姿态下的网格和骨骼位置作为 XPS 的默认姿态。比如把 A-pose 摆成 T-pose 后导出。</td></tr>
+      <tr><td>缩放</td><td class="def">1.0</td><td>整体乘以的比例。XPS 角色通常 1.5～1.9 单位高；厘米单位的模型（UE 导出）填 0.01。</td></tr>
+      <tr><td>导出顶点色</td><td class="def">开</td><td>写入活动颜色属性；没有就写白色。</td></tr>
+      <tr><td>导出全部 UV 层</td><td class="def">关</td><td>默认只写第一层 UV（XPS 只用第一层，光照贴图用第二层）。</td></tr>
+      <tr><td>自动转正朝向</td><td class="def">开</td><td>按眼球（其次脚踝→脚趾）方向判断角色朝向，整体绕 Z 轴旋转让角色面向 XPS 观众（Blender 的 -Y）。没识别到眼睛或腿骨就不处理。</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="group-title">骨骼与权重</div>
+  <div class="scroll"><table class="wide">
+    <thead><tr><th>选项</th><th>默认</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>每顶点最多权重数</td><td class="def">4</td><td>超过的按权重大小截断，然后重新归一化到和为 1。0 = 不限制（只对 v3 / ASCII 格式有效；v2 和经典 .mesh 固定 4 个）。</td></tr>
+      <tr><td>无权重顶点</td><td class="def">绑定到根骨</td><td>没有任何骨骼权重的顶点怎么办：<code>绑定到根骨</code> / <code>绑定到最近的骨骼</code> / <code>保持 0 权重</code>（XPS 里会塌到原点，不推荐）。用骨骼父级方式挂接的网格会绑到那根父骨。</td></tr>
+      <tr><td>骨骼命名</td><td class="def">映射为 XPS 标准骨名</td><td>识别 MMD（日文、<code>.L/.R</code>、mmd_tools 英文）、3ds Max Biped / Bip001、Mixamo、VRoid、VRM、Rigify、UE4/UE5 mannequin、MetaHuman 的骨名，改成 XPS 标准名：<code>root ground</code>、<code>root hips</code>、<code>spine lower/middle/upper</code>、<code>head neck lower/upper</code>、<code>arm left shoulder 1/2</code>、<code>arm left elbow/wrist</code>、<code>arm left finger 1a…5c</code>、<code>leg left thigh/knee/ankle/toes</code>、<code>head eyeball left/right</code>、<code>head jaw</code>。其余保持原名。改成标准名后社区的 .pose 文件可以直接用。</td></tr>
+      <tr><td>其余骨名转成 ASCII</td><td class="def">关</td><td>未映射的日文骨名按 mmd_tools 词典翻译成英文（<code>腰キャンセル.L</code> → <code>WaistCancel.L</code>）。XPS 本身读 UTF-8 没问题；只在要用 XNALaraMesh 导回 Blender、或其他只认 ASCII 的工具时勾选。</td></tr>
+      <tr><td>合并 MMD 辅助骨</td><td class="def">开</td><td><code>足D/ひざD/足首D</code> 并入 <code>足/ひざ/足首</code>，<code>腕捩/手捩(1-3)</code> 并入 <code>腕/ひじ</code>，<code>肩C/肩P</code> 并入 <code>肩</code>，<code>腰キャンセル</code> 去掉；权重和子骨一起转移。不合并的话 XPS 里转动主骨骼网格不会动（权重都在 D 骨上）。</td></tr>
+      <tr><td>去掉 mmd_tools 内部骨</td><td class="def">开</td><td>去掉 <code>_dummy_</code> / <code>_shadow_</code> 开头且没有权重的约束辅助骨。</td></tr>
+      <tr><td>父骨排在子骨前面</td><td class="def">开</td><td>骨骼列表按层级重排，保证父骨索引小于子骨。</td></tr>
+      <tr><td>隐藏辅助骨 (unused 前缀)</td><td class="def">开</td><td>扭转骨、肌肉修正骨、IK / 附件骨等加 <code>unused_</code> 前缀：XPS 骨骼列表里不显示，但仍参与蒙皮（XNALara 约定）。识别出的 XPS 标准骨永远不会被隐藏。</td></tr>
+      <tr><td>隐藏面部骨</td><td class="def">关</td><td>MetaHuman 风格的 <code>FACIAL_*</code> 骨（600 多根）加 <code>unused_</code> 前缀；下颌、眼球、舌头保留可见。</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="group-title">材质与文件</div>
+  <div class="scroll"><table class="wide">
+    <thead><tr><th>选项</th><th>默认</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>文件格式</td><td class="def">自动</td><td><code>自动</code>：路径以 <code>.ascii</code> 结尾写文本格式，否则写 XPS 二进制（权重上限 ≤4 用 v2.15，否则 v3.15）。其余见<a href="#formats">格式速查</a>。扩展名会按格式自动改正。</td></tr>
+      <tr><td>透明材质</td><td class="def">自动检测</td><td><code>自动</code>：材质混合模式不是 Opaque、且漫反射贴图在<strong>这个部件自己的 UV</strong> 上采样有 ≥8% 的透明像素，才用带 alpha 的渲染组；mmd 材质 alpha &lt; 1 直接算透明。<code>全部不透明</code> / <code>全部透明</code> 强制。</td></tr>
+      <tr><td>材质烘焙</td><td class="def">自动</td><td><code>自动</code>：颜色或透明由节点算出来的材质（颜色渐变驱动的头发、拆通道当 alpha 的睫毛、程序化虹膜、带明显色调的皮肤等）用 Cycles 发光烘焙成一张 RGBA PNG；贴图直连 Base Color 的材质不烘，保留原分辨率。<code>全部烘焙</code> / <code>不烘焙</code>。</td></tr>
+      <tr><td>烘焙尺寸</td><td class="def">0</td><td>0 = 取材质里贴图的尺寸，最小 512、最大 2048；也可以填 1024 / 4096。</td></tr>
+      <tr><td>跳过半透明辅助壳</td><td class="def">开</td><td>固定 alpha &lt; 0.5 的材质（眼部遮蔽壳、泪线、假反射片）不导出。完全透明（alpha = 0）的材质无论如何都跳过。</td></tr>
+      <tr><td>无光照渲染组 (卡通)</td><td class="def">关</td><td>用渲染组 10/21（不受光照），适合 MMD 卡通贴图。</td></tr>
+      <tr><td>高光值</td><td class="def">0.1</td><td>写进部件名的高光强度，XPS 里可再调。</td></tr>
+      <tr><td>复制贴图到输出目录</td><td class="def">开</td><td>用到的贴图复制到模型旁边；打包图、<code>.hdr/.exr/.tif/.psd</code> 等 XPS 不认的格式自动转成 PNG；没有漫反射贴图的材质生成一张 4×4 纯色 PNG。</td></tr>
+      <tr><td>网格名转成 ASCII</td><td class="def">开</td><td>部件名里的非 ASCII 字符按词典翻译或去掉。</td></tr>
+      <tr><td>去掉部件名的公共前缀</td><td class="def">开</td><td><code>Fiona_Face</code> / <code>Fiona_Hair</code> → <code>Face</code> / <code>Hair</code>。</td></tr>
+      <tr><td>写导出报告 (.report.txt)</td><td class="def">开</td><td>见<a href="#report">第 6 节</a>。</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="presets">
+  <header><span class="num">4</span><h2>按模型来源的推荐设置</h2></header>
+  <div class="tiles">
+    <div class="tile">
+      <div class="src">mmd_tools · PMX</div>
+      <h3>MMD 模型</h3>
+      <ul>
+        <li>默认设置就是为它准备的：合并 MMD 辅助骨、映射 XPS 骨名、4 权重、自动透明检测。</li>
+        <li>点击骨架或身体网格再导出；刚体、关节物体自动跳过。</li>
+        <li>身体贴图的 alpha 通道常塞了别的数据（<code>*_rgbx_*</code>），按部件 UV 采样不会把身体误判成透明。</li>
+        <li>带 VMD 姿态时导出的是静止姿态；想导出当前姿态勾“把当前姿态烘焙为绑定姿态”。</li>
+      </ul>
+    </div>
+    <div class="tile">
+      <div class="src">UE Viewer / FModel · UE4 / UE5</div>
+      <h3>游戏提取的 UE 模型（Vindictus、FF7 等）</h3>
+      <ul>
+        <li><strong>缩放填 0.01</strong>（厘米 → XPS 单位）。报告里“模型高度 184 单位”的警告就是提醒这个。</li>
+        <li>范围用“全部可见网格”（一副合并骨架 + 多个部件）。</li>
+        <li>材质烘焙保持“自动”：头发、眼球、睫毛一定要烘焙，否则 XPS 里是白眼球、乱色头发。</li>
+        <li>隐藏辅助骨保持开；MetaHuman 面部骨太多时勾“隐藏面部骨”。</li>
+        <li>每个模型 1～5 分钟，主要花在 2048 烘焙上；赶时间把烘焙尺寸设 1024。</li>
+      </ul>
+    </div>
+    <div class="tile">
+      <div class="src">FBX · Rigify · Mixamo · VRoid</div>
+      <h3>一般绑定角色</h3>
+      <ul>
+        <li>常见骨名都会映射；Rigify 请导出生成的 DEF 骨架而不是控制骨架（控制骨没有权重）。</li>
+        <li>有镜像、细分修改器时保持“应用修改器”开。</li>
+        <li>缩放看报告里的高度：Blender 里 1.7 m 高就填 1。</li>
+      </ul>
+    </div>
+    <div class="tile">
+      <div class="src">无骨架</div>
+      <h3>静态物体（道具、场景）</h3>
+      <ul>
+        <li>没有骨架也能导：自动加一根 <code>root ground</code> 骨，所有顶点权重 1 绑到它。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="overrides">
+  <header><span class="num">5</span><h2>用名字和属性控制单个部件</h2></header>
+  <div class="scroll"><table class="wide">
+    <thead><tr><th>写在哪里</th><th>效果</th></tr></thead>
+    <tbody>
+      <tr><td>材质自定义属性 <code>xps_render_group</code>（整数 1～43）</td><td>强制该材质的渲染组，贴图槽按该组要求填充</td></tr>
+      <tr><td>材质自定义属性 <code>xps_alpha</code>（0 / 1）</td><td>强制不透明 / 透明</td></tr>
+      <tr><td>材质自定义属性 <code>xps_specular</code>（小数）</td><td>该部件的高光值</td></tr>
+      <tr><td>物体名以 <code>数字_</code> 开头（如 <code>7_hair</code>，XNALaraMesh 的命名习惯）</td><td>当作渲染组覆盖，前缀不会出现在部件名里</td></tr>
+      <tr><td>物体名以 <code>+</code> / <code>-</code> 开头</td><td>XPS 可选部件（默认显示 / 默认隐藏）</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <p>自定义属性在 Properties &gt; Material &gt; Custom Properties 里添加。</p>
+    <p>部件名生成规则：<code>&lt;渲染组&gt;_&lt;名字&gt;_&lt;高光&gt;_0_0</code>。名字来自物体名（多材质时加材质名；只有一个物体时只用材质名），Blender 的 <code>.001</code> 后缀和下划线（XPS 的分隔符）会被清理，重名自动加序号。</p>
+    <p>渲染组自动选择：只有漫反射 → 5/7，加法线 → 4/6，加高光 → 40/41，加自发光 → 36/37，加光照贴图 → 3/9 或 2/8；偶数不透明、奇数透明；卡通 → 10/21。</p>
+  </div>
+</section>
+
+<section id="report">
+  <header><span class="num">6</span><h2>导出报告怎么读</h2></header>
+  <div class="prose"><p><code>&lt;文件&gt;.report.txt</code> 分两段。头部：</p></div>
+  <pre><code>文件 / 格式 / 耗时
+骨骼 260  网格部件 11  顶点 50301  三角面 73813  每顶点最多权重 4
+包围盒 (XPS 坐标): ... -> 高度 1.783          # 高度不在 1.5~2 附近要看缩放
+改名的骨骼 (55): 全ての親->root ground, ...     # 骨名映射结果
+合并的骨骼 (28): 足D.L->足.L, ...              # 权重去了哪根骨
+去除的骨骼 (62): _dummy_...                    # 没有权重的内部骨
+XPS 列表中隐藏的辅助骨 (260, 前缀 unused_): ...
+跳过的物体 (100): xxx(mmd_tools 刚体/关节); yyy(隐藏); zzz(未绑定到骨架 ...)
+写出贴图 7 个</code></pre>
+  <div class="prose">
+    <p>正文按网格列出：每个部件一行（部件名、顶点、三角面、渲染组、贴图文件），以及：</p>
+    <ul>
+      <li><code>警告: ... N 个顶点没有骨骼权重，已绑定到根骨</code>：检查这些顶点是否本该有权重。</li>
+      <li><code>N 个顶点超过 4 个权重，已按权重大小截断并重新归一化</code>：正常；v3 格式可不截断。</li>
+      <li><code>忽略非骨骼顶点组: mmd_edge_scale, ...</code>：名字不是骨骼的顶点组，正常。</li>
+      <li><code>烘焙材质 xxx -&gt; 2048x2048</code> / <code>跳过材质 xxx: 完全透明 | 半透明辅助壳</code>。</li>
+      <li><code>没有漫反射贴图，已生成纯色贴图</code>：材质里找不到图片，XPS 里会是纯色。</li>
+      <li><code>渲染组 N 需要 bump 贴图但材质里没有</code>：手动指定的渲染组缺贴图，写成 <code>missing.png</code>。</li>
+      <li><code>文件校验: ...</code>：写完回读文件发现的问题（索引越界、权重和不为 1 等），出现即为错误。</li>
+    </ul>
+  </div>
+  <div class="note warn"><strong><code>错误:</code> 开头的条目说明文件有问题，不要拿去用。</strong></div>
+</section>
+
+<section id="xps">
+  <header><span class="num">7</span><h2>在 XPS 里加载和检查</h2></header>
+  <div class="prose">
+    <ol>
+      <li>打开 XNALara XPS（11.8 及以上都能读默认的 v2.15 格式）。</li>
+      <li>Modify &gt; <strong>Load Generic_Item...</strong>，选导出的 <code>.xps</code>；贴图在同目录会自动找到。</li>
+      <li>检查项：模型面向你、脚在地面附近、高度和其他 XPS 模型接近；打开 Bones 面板，<code>root hips</code> / <code>arm left elbow</code> / <code>leg left knee</code> 等能找到，转动一根主骨对应部位跟着动；头发、睫毛边缘透明正确；身体没有闪烁（闪烁说明被判成透明，见排错）；<code>unused_</code> 开头的骨不出现在列表里。</li>
+      <li>想保存成 XPS 自己的格式：File &gt; Save Generic_Item。</li>
+    </ol>
+  </div>
+</section>
+
+<section id="batch">
+  <header><span class="num">8</span><h2>批量导出（无头模式）</h2></header>
+  <pre><code>&amp; "D:\Program Files\blender-3.6.15-windows-x64\blender.exe" -b --python tools\batch_export_blends.py -- `
+    --out D:\out --scale 0.01 --bake AUTO a.blend b.blend c.blend</code></pre>
+  <div class="scroll"><table>
+    <thead><tr><th>参数</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><code>--out &lt;目录&gt;</code></td><td>每个 .blend 输出到 <code>&lt;目录&gt;\&lt;名字&gt;\&lt;名字&gt;.xps</code></td></tr>
+      <tr><td><code>--scale 0.01</code></td><td>缩放</td></tr>
+      <tr><td><code>--scope VISIBLE|ARMATURE|SELECTED</code></td><td>导出范围，默认 VISIBLE</td></tr>
+      <tr><td><code>--bake AUTO|ALL|OFF</code></td><td>材质烘焙，默认 AUTO</td></tr>
+      <tr><td><code>--bake-size 1024</code></td><td>烘焙尺寸，默认按贴图尺寸</td></tr>
+      <tr><td><code>--fmt AUTO|XPS2|XPS3|MESH|ASCII</code></td><td>文件格式</td></tr>
+      <tr><td><code>--bone-naming XPS|KEEP</code></td><td>骨骼命名</td></tr>
+      <tr><td><code>--max-weights 4</code></td><td>每顶点权重上限</td></tr>
+      <tr><td><code>--hide-facial</code></td><td>隐藏面部骨</td></tr>
+      <tr><td><code>--no-facing</code></td><td>关闭自动转正朝向</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <p>每个文件打印一行 <code>BLENDER2XPS_BATCH={...json...}</code>，含 ok / bones / meshes / stats / warnings / errors，方便脚本收集。多开几个 Blender 进程并行即可（每个进程峰值内存约 2.5 GB）。导完后生成索引页：</p>
+  </div>
+  <pre><code>python tools\write_export_index.py D:\out [manifest.json]</code></pre>
+  <div class="prose">
+    <p>会在 <code>D:\out\README.md</code> 写一张表：每个模型的骨骼数、标准骨数、隐藏骨数、部件、顶点、三角面、烘焙 / 跳过材质数、警告数、校验结果、大小。</p>
+  </div>
+</section>
+
+<section id="api">
+  <header><span class="num">9</span><h2>脚本调用</h2></header>
+  <pre><code>import bpy
+from blender2xps import export_xps
+
+settings = export_xps.Settings(
+    filepath=r'D:\out\model.xps',   # 扩展名会按格式改正
+    fmt='AUTO', scope='ARMATURE', scale=1.0,
+    bone_naming='XPS', mmd_merge_helpers=True,
+    bake_mode='AUTO', alpha_mode='AUTO')
+result = export_xps.export_model(bpy.context, settings)
+print(result.summary())      # 一行汇总
+print(result.warnings)       # 警告列表
+print(result.report_text)    # 完整报告</code></pre>
+  <div class="prose">
+    <p><code>Settings</code> 的字段名和面板选项一一对应：<code>scope</code>、<code>visible_only</code>、<code>apply_modifiers</code>、<code>bake_pose</code>、<code>scale</code>、<code>max_weights</code>、<code>unweighted</code>、<code>bone_naming</code>、<code>ascii_bone_names</code>、<code>mmd_merge_helpers</code>、<code>drop_internal_bones</code>、<code>sort_bones</code>、<code>hide_helper_bones</code>、<code>hide_facial_bones</code>、<code>ascii_mesh_names</code>、<code>copy_textures</code>、<code>alpha_mode</code>、<code>bake_mode</code>、<code>bake_size</code>、<code>skip_translucent</code>、<code>unlit</code>、<code>specular</code>、<code>vertex_colors</code>、<code>all_uv_layers</code>、<code>strip_common_prefix</code>、<code>auto_facing</code>、<code>write_report</code>、<code>armature_name</code>。传错名字会立刻抛 <code>TypeError</code>。</p>
+    <p>只检查不导出：<code>export_xps.analyze(bpy.context, settings)</code> 返回文本行列表。操作符：<code>bpy.ops.blender2xps.export(filepath=..., fmt='ASCII', scope='ARMATURE')</code>。</p>
+  </div>
+</section>
+
+<section id="tools">
+  <header><span class="num">10</span><h2>命令行工具</h2></header>
+  <div class="prose"><p>不需要 Blender，系统 Python 即可：</p></div>
+  <pre><code>python tools\xpsdump.py model.xps                      # 格式、骨骼、部件、贴图、包围盒、校验结果
+python tools\xpsdump.py --bones model.xps              # 列出全部骨骼（索引、父级、坐标）
+python tools\xpsdump.py --compare a.xps b.mesh.ascii   # 两个文件数值比较（骨骼、顶点、权重）</code></pre>
+  <div class="prose"><p>任何来源的 XPS 文件都能检查，包括 XPS 自己保存的。需要 Blender 的：</p></div>
+  <pre><code># 端到端测试：合成骨架 + 镜像多材质网格 + 混乱权重，四种格式导出、回读校验、XNALaraMesh 导回比对
+blender -b --python tests\test_export_headless.py -- --out D:\tmp\b2x_test
+
+# 通过 blender-mcp 在正在运行的 Blender 里执行脚本 / 重载插件
+python tools\blender_mcp.py exec script.py
+python tools\blender_mcp.py reload</code></pre>
+</section>
+
+<section id="faq">
+  <header><span class="num">11</span><h2>常见问题排查</h2></header>
+  <div class="scroll"><table class="wide">
+    <thead><tr><th>现象</th><th>原因</th><th>解法</th></tr></thead>
+    <tbody>
+      <tr><td>XPS 里模型碎成一团或缩向原点</td><td>顶点没有权重 / 权重和不为 1（老插件的典型问题）</td><td>本插件默认归一化并把无权重顶点绑到根骨；看报告“没有骨骼权重”的数量，确认这些顶点在 Blender 里是否本该有权重</td></tr>
+      <tr><td>转动主骨骼，网格不动（MMD）</td><td>权重在 <code>足D</code>、<code>腕捩</code> 等辅助骨上</td><td>开“合并 MMD 辅助骨”（默认开）</td></tr>
+      <tr><td>模型只有几厘米高，或大得看不见</td><td>单位不对（UE 模型是厘米）</td><td>缩放 0.01 / 100；报告和“检查模型”都会提示高度</td></tr>
+      <tr><td>模型背对或侧对观众</td><td>源文件朝向不是 -Y</td><td>“自动转正朝向”默认开；仍不对就在 Blender 里旋转骨架物体（连同网格）后导出</td></tr>
+      <tr><td>身体闪烁、半透明</td><td>被判成透明渲染组</td><td>材质加 <code>xps_alpha = 0</code>，或“透明材质 = 全部不透明”；检查贴图 alpha 通道是否真的是透明信息</td></tr>
+      <tr><td>头发、睫毛边缘是黑块</td><td>贴图没有 alpha，或颜色 / 透明由节点计算</td><td>材质烘焙“自动”会处理；仍不行就“全部烘焙”</td></tr>
+      <tr><td>眼球是白的 / 头发颜色像遮罩图</td><td>程序化材质没烘焙</td><td>材质烘焙设为“自动”或“全部烘焙”</td></tr>
+      <tr><td>贴图是纯色或 <code>missing.png</code></td><td>材质节点里找不到图片</td><td>看“检查模型”里该材质的“贴图”列；贴图要接到 Principled 的 Base Color / Normal，或用烘焙</td></tr>
+      <tr><td>XNALaraMesh 导回 Blender 时日文骨名乱码</td><td>那个导入器按 latin-1 读字符串，XPS 本身没问题</td><td>勾“其余骨名转成 ASCII”</td></tr>
+      <tr><td>XPS 骨骼列表几百上千行</td><td>游戏骨架的扭转 / 修正 / 面部骨</td><td>“隐藏辅助骨”（默认开）、“隐藏面部骨”</td></tr>
+      <tr><td>导出很慢</td><td>烘焙 2048 贴图</td><td>烘焙尺寸 1024，或对不需要的材质加 <code>xps_render_group</code> 后关闭烘焙</td></tr>
+      <tr><td>XPS 打不开文件</td><td>文件损坏或格式不兼容</td><td><code>python tools\xpsdump.py 文件</code> 看校验结果；换“XPS 二进制 v2.15”或 ASCII 格式再试；报告里有 <code>错误:</code> 的文件不要用</td></tr>
+      <tr><td>检查 / 导出报“没有可导出的网格”</td><td>范围里没有网格，或网格都被隐藏 / 未绑定</td><td>换范围为“全部可见网格”，或先选中网格</td></tr>
+      <tr><td>面板没出现</td><td>插件未启用，或 Blender 启动前联接还没建</td><td>Preferences 里启用；改代码后 <code>blender_mcp.py reload</code> 或重启 Blender</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="formats">
+  <header><span class="num">12</span><h2>文件格式速查</h2></header>
+  <div class="scroll"><table class="formats">
+    <thead><tr><th>格式</th><th>扩展名</th><th>文件头</th><th>权重</th><th>切线</th><th>谁能读</th></tr></thead>
+    <tbody>
+      <tr><td>XPS2（默认）</td><td><code>.xps</code> / <code>.mesh</code></td><td>有，v2.15</td><td>固定 4</td><td>无</td><td>XPS 11.x 全部、XNALaraMesh、本工具</td></tr>
+      <tr><td>XPS3</td><td><code>.xps</code> / <code>.mesh</code></td><td>有，v3.15</td><td>每顶点可变</td><td>无</td><td>XPS 11.8.9+、XNALaraMesh</td></tr>
+      <tr><td>MESH（经典）</td><td><code>.mesh</code></td><td>无</td><td>固定 4</td><td>每 UV 层 4 float</td><td>XNALara、所有 XPS</td></tr>
+      <tr><td>ASCII</td><td><code>.mesh.ascii</code></td><td>无</td><td>可变</td><td>无</td><td>全部，可用文本编辑器看</td></tr>
+    </tbody>
+  </table></div>
+  <div class="prose">
+    <p>坐标：Blender (x, y, z) → XPS (x, z, -y)；三角面顶点序 (0, 2, 1)；UV 的 v 翻转。文件头的 settings 块与 XPS 11.7 / 11.8 自己写出的文件逐字节一致。</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+<footer>Markdown 版本在仓库 <code>docs/使用指南.md</code>，以它为准。</footer>
+</body>
+</html>
