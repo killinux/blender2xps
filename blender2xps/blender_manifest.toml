@@ -1,0 +1,11 @@
+schema_version = "1.0.0"
+
+id = "blender2xps"
+version = "1.0.0"
+name = "Blender2XPS (XPS / XNALara Exporter)"
+tagline = "Export meshes with armature and weights to XPS / XNALara"
+maintainer = "blender2xps"
+type = "add-on"
+blender_version_min = "4.2.0"
+license = ["SPDX:MIT"]
+tags = ["Import-Export"]
