@@ -146,7 +146,9 @@ def _build_alias_index():
         side = key[-1] if key.endswith('_l') or key.endswith('_r') else None
         for name in names:
             for expanded in _expand_side(name, side):
-                for variant in (expanded, expanded.replace(' ', '_')):
+                # 3ds Max Biped rigs from UE games spell it Bip001-L-Clavicle
+                # (Stellar Blade); index the hyphenated form as well
+                for variant in (expanded, expanded.replace(' ', '_'), expanded.replace(' ', '-')):
                     low = variant.strip().lower()
                     if low and low not in index:
                         index[low] = key
