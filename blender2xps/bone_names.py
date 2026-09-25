@@ -125,6 +125,27 @@ for _finger, _kanji, _en, _bip, _mixamo, _vroid in _FINGER_DEFS:
             _ALIASES[key] = names
 
 
+# Square Enix FINAL FANTASY VII Remake / Rebirth rigs: C_Hip_a, C_Spine_a..d (the arms hang on
+# C_Spine_d, so that is "spine upper"; C_Spine_c stays a plain bone), L_UpperArm_a,
+# L_Forearm_a, L_Hand_a, L_UpperLeg_a, L_Foreleg_a, L_Foot_a, L_Toe_a, L_Thumb_a..c ...
+_SE_FF7 = {
+    'root': ['Trans'], 'hips': ['C_Hip_a'], 'spine_lower': ['C_Spine_a'], 'spine_middle': ['C_Spine_b'],
+    'spine_upper': ['C_Spine_d'], 'neck': ['C_Neck_a'], 'head': ['C_Head_a'],
+}
+for _key, _se in (('shoulder', 'Shoulder_a'), ('upper_arm', 'UpperArm_a'), ('elbow', 'Forearm_a'),
+                  ('wrist', 'Hand_a'), ('thigh', 'UpperLeg_a'), ('knee', 'Foreleg_a'),
+                  ('ankle', 'Foot_a'), ('toes', 'Toe_a')):
+    _SE_FF7[_key + '_l'] = [_se + '{L}']
+    _SE_FF7[_key + '_r'] = [_se + '{R}']
+for _finger, _se in (('thumb', 'Thumb'), ('index', 'Index'), ('middle', 'Middle'), ('ring', 'Ring'),
+                     ('pinky', 'Pinky')):
+    for _seg, _letter in ((1, 'a'), (2, 'b'), (3, 'c')):
+        for _side, _S in (('l', 'L'), ('r', 'R')):
+            _SE_FF7['%s_%d_%s' % (_finger, _seg, _side)] = ['%s_%s{%s}' % (_se, _letter, _S)]
+for _key, _names in _SE_FF7.items():
+    _ALIASES[_key].extend(_names)
+
+
 def _expand_side(name, side):
     """Expand {L}/{R} placeholders into all spellings."""
     if '{L}' not in name and '{R}' not in name:
